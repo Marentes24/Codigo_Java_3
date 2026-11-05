@@ -2,12 +2,20 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 public class Demo {
     static Evento e(int id, int p) { return e(id, p, 0); }
     static Evento e(int id, int p, int dia) {
         return new Evento(id, Instant.parse("2026-01-01T00:00:00Z").plus(Duration.ofDays(dia)),
                           "Evento " + id, p);
+    }
+    /** n eventos con id 0..499, prioridad 0..9 y fecha en los primeros 30 días de 2026. */
+    static Evento[] aleatorios(int n) {
+        Random rnd = new Random();
+        return IntStream.range(0, n)
+            .mapToObj(i -> e(rnd.nextInt(500), rnd.nextInt(10), rnd.nextInt(30)))
+            .toArray(Evento[]::new);
     }
     static void verificar(String nombre, Consumer<Evento[]> ordenar,
                           Comparator<Evento> criterio, boolean estable) {
@@ -63,7 +71,8 @@ public class Demo {
         verificar("Insertion por fecha", a -> Ordenamientos.insertion(a,f), f, true);
         verificar("Merge por fecha", a -> Ordenamientos.merge(a,f), f, true);
         verificar("Quick por fecha", a -> Ordenamientos.quick(a,f), f, false);
-        Evento[] porFecha = {e(1,2,12), e(2,0,3), e(3,5,27), e(4,1,3), e(5,9,0)};
+        if (aleatorios(0).length != 0 || aleatorios(7).length != 7) throw new AssertionError("aleatorios");
+        Evento[] porFecha = aleatorios(5);
         Ordenamientos.merge(porFecha, f);
         for (Evento ev : porFecha)
             System.out.println(ev.getId() + " " + ev.getFechaCreacion());
