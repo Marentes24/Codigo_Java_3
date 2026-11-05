@@ -1,10 +1,12 @@
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 
 public class Demo {
-    static Evento e(int id, int p) {
-        return new Evento(id, Instant.parse("2026-01-01T00:00:00Z"),
+    static Evento e(int id, int p) { return e(id, p, 0); }
+    static Evento e(int id, int p, int dia) {
+        return new Evento(id, Instant.parse("2026-01-01T00:00:00Z").plus(Duration.ofDays(dia)),
                           "Evento " + id, p);
     }
     static void verificar(String nombre, Consumer<Evento[]> ordenar,
@@ -13,7 +15,8 @@ public class Demo {
         for (int caso = 0; caso < 250; caso++) {
             int n = caso < 5 ? caso : rnd.nextInt(150);
             Evento[] a = new Evento[n];
-            for (int i = 0; i < n; i++) a[i] = e(rnd.nextInt(500), rnd.nextInt(10));
+            // 30 días posibles: fechas repetidas para probar estabilidad al ordenar por fecha
+            for (int i = 0; i < n; i++) a[i] = e(rnd.nextInt(500), rnd.nextInt(10), rnd.nextInt(30));
             if (caso % 3 == 0) Arrays.sort(a, criterio);
             if (caso % 3 == 1) Arrays.sort(a, criterio.reversed());
             Evento[] esperado = a.clone();
@@ -55,5 +58,14 @@ public class Demo {
         Evento[] ejemplo = {e(170,3),e(45,1),e(75,3),e(90,0),e(802,1),e(24,2)};
         Ordenamientos.counting(ejemplo);
         System.out.println(Arrays.toString(ejemplo));
+
+        Comparator<Evento> f = Ordenamientos.POR_FECHA;
+        verificar("Insertion por fecha", a -> Ordenamientos.insertion(a,f), f, true);
+        verificar("Merge por fecha", a -> Ordenamientos.merge(a,f), f, true);
+        verificar("Quick por fecha", a -> Ordenamientos.quick(a,f), f, false);
+        Evento[] porFecha = {e(1,2,12), e(2,0,3), e(3,5,27), e(4,1,3), e(5,9,0)};
+        Ordenamientos.merge(porFecha, f);
+        for (Evento ev : porFecha)
+            System.out.println(ev.getId() + " " + ev.getFechaCreacion());
     }
 }
